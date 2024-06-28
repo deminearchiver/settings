@@ -1,8 +1,9 @@
+library;
+
 import 'dart:async';
 
 import 'package:macros/macros.dart';
 import 'package:collection/collection.dart';
-import 'package:settings/settings.dart';
 import 'extensions.dart';
 
 part 'field.dart';
@@ -11,8 +12,6 @@ final _dartCore = Uri.parse("dart:core");
 final _dartAsync = Uri.parse("dart:async");
 final _changeNotifier =
     Uri.parse("package:flutter/src/foundation/change_notifier.dart");
-
-final _settings = Uri.parse("package:settings/settings.dart");
 final _annotations = Uri.parse("package:settings/src/macros/annotations.dart");
 
 void _log(Builder builder, String message, [DiagnosticTarget? target]) {
@@ -97,6 +96,7 @@ macro class Settings
             ))
         .flattened
         .wait;
+    final hasChangeNotifier = await _checkHasChangeNotifier(clazz, builder);
     for (final method in map) {
       final isGetter = method.method.isGetter;
 
@@ -109,7 +109,7 @@ macro class Settings
             : FunctionBodyCode.fromParts([
                 "{\n",
                 "    ${method.field.rawName} = value;\n",
-                "    notifyListeners();\n",
+                if(hasChangeNotifier) "    notifyListeners();\n",
                 "    save();\n",
                 "  }",
               ]),
@@ -118,7 +118,6 @@ macro class Settings
 
     final string = await builder.resolveIdentifier(_dartCore, "String");
     final future = await builder.resolveIdentifier(_dartAsync, "Future");
-    final futureOr = await builder.resolveIdentifier(_dartAsync, "FutureOr");
     final list = await builder.resolveIdentifier(_dartCore, "List");
 
     final load =
@@ -147,13 +146,7 @@ macro class Settings
               ]);
             },
           ),
-          "    ] as ",
-          list,
-          "<",
-          future,
-          "<",
-          string,
-          "?>>);\n\n",
+          "    ]);\n\n",
           ...await data.map(
             (field) async {
               final variables = _FieldVariables(
@@ -171,10 +164,12 @@ macro class Settings
               ]);
             },
           ).wait,
-          "    if(",
-          data.map((field) => "d_${field.accessorName} != null").join(" &&\n       "),
-          ") notifyListeners();\n",
-          "  }",
+          if(hasChangeNotifier) ...[
+            "    if(",
+            data.map((field) => "d_${field.accessorName} != null").join(" &&\n       "),
+            ") notifyListeners();\n",
+            "  }",
+          ],
         ]),
         docComments:
             CommentCode.fromString("  /// Loads all values from storage."),
@@ -216,11 +211,7 @@ macro class Settings
               ]);
             },
           ),
-          "    ] as ",
-          list,
-          "<",
-          future,
-          "<void>>);\n",
+          "    ]);\n",
           "  }",
         ]),
         docComments:

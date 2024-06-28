@@ -1,32 +1,10 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-
-import 'package:settings/macros.dart' as settings;
-import 'package:settings/settings.dart';
+import 'package:material_symbols_icons/material_symbols_icons.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-@settings.Settings()
-class Settings with ChangeNotifier {
-  Settings({
-    required SharedPreferences sharedPreferences,
-    required FlutterSecureStorage secureStorage,
-  }) : _adapters = {
-          "memory": const MemorySettingsAdapter(),
-          "shared": SharedSettingsAdapter(sharedPreferences),
-          "secure": SecureSettingsAdapter(secureStorage),
-        };
-
-  final Map<String, SettingsAdapter> _adapters;
-  SettingsAdapter _adapterFor([String? kind]) {
-    return kind != null && _adapters.containsKey(kind)
-        ? _adapters[kind]!
-        : _adapters["shared"]!;
-  }
-
-  Brightness _brightness = PlatformDispatcher.instance.platformBrightness;
-  bool _useSystemBrightness = true;
-}
+import 'settings.dart';
 
 void main() async {
   final settings = Settings(
@@ -54,10 +32,68 @@ class App extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      theme: ThemeData(),
-      darkTheme: ThemeData.dark(),
-      themeMode: ThemeMode.system,
+    return ChangeNotifierProvider(
+      create: (context) => settings,
+      builder: (context, child) {
+        final settings = Settings.watch(context);
+        return MaterialApp(
+          debugShowCheckedModeBanner: false,
+          theme: ThemeData(),
+          darkTheme: ThemeData.dark(),
+          themeMode: settings.themeMode,
+          home: const SettingsView(),
+        );
+      },
+    );
+  }
+}
+
+class SettingsView extends StatefulWidget {
+  const SettingsView({super.key});
+
+  @override
+  State<SettingsView> createState() => _SettingsViewState();
+}
+
+class _SettingsViewState extends State<SettingsView> {
+  @override
+  Widget build(BuildContext context) {
+    final settings = Settings.watch(context);
+    return Scaffold(
+      body: CustomScrollView(
+        slivers: [
+          SliverAppBar.large(
+            title: Text("Settings"),
+          ),
+          SliverList.list(
+            children: [
+              SwitchListTile(
+                value: settings.useSystemBrightness,
+                onChanged: (value) => settings.useSystemBrightness = value,
+                secondary: const Icon(Symbols.auto_mode_rounded),
+                title: const Text("Use system brightness"),
+              ),
+              SegmentedButton<Brightness>(
+                onSelectionChanged: (values) =>
+                    settings.brightness = values.first,
+                selected: {settings.brightness},
+                segments: const [
+                  ButtonSegment(
+                    value: Brightness.light,
+                    icon: Icon(Symbols.light_mode_rounded),
+                    label: Text("Light"),
+                  ),
+                  ButtonSegment(
+                    value: Brightness.dark,
+                    icon: Icon(Symbols.dark_mode_rounded),
+                    label: Text("Dark"),
+                  ),
+                ],
+              )
+            ],
+          ),
+        ],
+      ),
     );
   }
 }

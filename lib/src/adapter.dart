@@ -14,8 +14,8 @@ enum BuiltInSettingsAdapter implements SettingsAdapterKind {
 abstract class SettingsAdapter {
   const SettingsAdapter();
 
-  FutureOr<String?> read(String key);
-  FutureOr<void> write(String key, String value);
+  Future<String?> read(String key);
+  Future<void> write(String key, String value);
 }
 
 class MemorySettingsAdapter extends SettingsAdapter {
@@ -24,12 +24,12 @@ class MemorySettingsAdapter extends SettingsAdapter {
   final Map<String, String> _values;
 
   @override
-  FutureOr<String?> read(String key) {
+  Future<String?> read(String key) async {
     return _values[key];
   }
 
   @override
-  FutureOr<void> write(String key, String value) {
+  Future<void> write(String key, String value) async {
     _values[key] = value;
   }
 }
@@ -40,12 +40,12 @@ class SharedSettingsAdapter extends SettingsAdapter {
   final SharedPreferences _preferences;
 
   @override
-  FutureOr<String?> read(String key) {
+  Future<String?> read(String key) async {
     return _preferences.getString(key);
   }
 
   @override
-  FutureOr<void> write(String key, String value) async {
+  Future<void> write(String key, String value) async {
     await _preferences.setString(key, value);
   }
 }
@@ -56,14 +56,14 @@ class SecureSettingsAdapter extends SettingsAdapter {
   final FlutterSecureStorage _storage;
 
   @override
-  FutureOr<String?> read(String key) {
+  Future<String?> read(String key) {
     return _storage.read(
       key: key,
     );
   }
 
   @override
-  FutureOr<void> write(String key, String value) async {
+  Future<void> write(String key, String value) async {
     await _storage.write(
       key: key,
       value: value,
