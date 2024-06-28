@@ -1,0 +1,1 @@
+puro gc && puro flutter clean && puro pub get && puro flutter test -r expanded --enable-experiment=macros
