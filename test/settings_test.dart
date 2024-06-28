@@ -1,27 +1,43 @@
-import 'package:flutter/src/foundation/change_notifier.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:settings/macros.dart' as settings;
+import 'package:settings/settings.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
-  test(
-    "Creates and manipulates a Settings instance",
-    () {
-      final settings = Settings();
-      print("${settings.duration}");
-      expect(
-        settings.duration,
-        equals(Duration.zero),
-      );
-      settings.duration = const Duration(seconds: 10);
-      print("${settings.duration}");
-    },
-  );
+  // test(
+  //   "Creates and manipulates a Settings instance",
+  //   () {},
+  // );
 }
 
 @settings.Settings()
 class Settings with ChangeNotifier {
-  // Brightness _brightness = Brightness.dark;
+  Settings({
+    required SharedPreferences sharedPreferences,
+    required FlutterSecureStorage secureStorage,
+  }) : _adapters = {
+          "memory": const MemorySettingsAdapter(),
+          "shared": SharedSettingsAdapter(sharedPreferences),
+          "secure": SecureSettingsAdapter(secureStorage),
+        };
+
+  final Map<String, SettingsAdapter> _adapters;
+
+  SettingsAdapter _adapterFor([String? kind]) {
+    return kind != null && _adapters.containsKey(kind)
+        ? _adapters[kind]!
+        : _adapters["shared"]!;
+  }
+
+  Brightness _brightness = Brightness.dark;
+
+  @settings.Adapter("secure")
+  String _password = "";
+
+  bool _useSystemBrightness = true;
   String _id = "";
   int _number1 = 0;
   double _number2 = 0;

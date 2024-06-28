@@ -3,14 +3,12 @@ import 'dart:async';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-enum SettingsAdapterKind {
-  memory("memory"),
-  shared("shared"),
-  secure("secure");
+abstract interface class SettingsAdapterKind {}
 
-  const SettingsAdapterKind(this.name);
-
-  final String name;
+enum BuiltInSettingsAdapter implements SettingsAdapterKind {
+  memory,
+  shared,
+  secure;
 }
 
 abstract class SettingsAdapter {

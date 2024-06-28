@@ -11,6 +11,9 @@ dependencies:
     sdk: flutter
   settings:
     path: ../
+  shared_preferences: ^2.2.3
+  flutter_secure_storage: ^9.2.2
+  provider: ^6.1.2
 
 dev_dependencies:
   flutter_test:

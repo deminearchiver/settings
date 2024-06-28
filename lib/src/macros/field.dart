@@ -14,10 +14,12 @@ sealed class _Field {
   const _Field({
     required this.builder,
     required this.declaration,
+    this.adapter,
   });
 
   final DeclarationPhaseIntrospector builder;
   final FieldDeclaration declaration;
+  final ExpressionCode? adapter;
 
   String get rawName => declaration.identifier.name;
   String get accessorName => rawName.substring(1);
@@ -39,6 +41,7 @@ class _StringField extends _Field {
   _StringField({
     required super.builder,
     required super.declaration,
+    super.adapter,
   });
 
   @override
@@ -52,18 +55,49 @@ class _StringField extends _Field {
   }
 }
 
+class _BoolField extends _Field {
+  _BoolField({
+    required super.builder,
+    required super.declaration,
+    super.adapter,
+  });
+
+  @override
+  FutureOr<ExpressionCode> deserialize(_FieldVariables variables) {
+    return ExpressionCode.fromParts([
+      "switch(${variables.serialized}) { ",
+      "\"false\" => false, ",
+      "\"true\" => true, ",
+      "_ => null ",
+      "}",
+    ]);
+  }
+
+  @override
+  FutureOr<ExpressionCode> serialize(_FieldVariables variables) {
+    return ExpressionCode.fromParts([
+      "switch(${variables.deserialized}) { ",
+      "false => \"false\", ",
+      "true => \"true\", ",
+      "}",
+    ]);
+  }
+}
+
 class _IntField extends _Field {
   _IntField({
     required super.builder,
     required super.declaration,
+    super.adapter,
   });
 
   @override
   FutureOr<ExpressionCode> deserialize(_FieldVariables variables) async {
     final int = await builder.resolveIdentifier(_dartCore, "int");
     return ExpressionCode.fromParts([
+      "${variables.serialized} != null ? ",
       int,
-      ".tryParse(${variables.serialized})",
+      ".tryParse(${variables.serialized}) : null",
     ]);
   }
 
@@ -79,14 +113,16 @@ class _DoubleField extends _Field {
   _DoubleField({
     required super.builder,
     required super.declaration,
+    super.adapter,
   });
 
   @override
   FutureOr<ExpressionCode> deserialize(_FieldVariables variables) async {
-    final int = await builder.resolveIdentifier(_dartCore, "double");
+    final double = await builder.resolveIdentifier(_dartCore, "double");
     return ExpressionCode.fromParts([
-      int,
-      ".tryParse(${variables.serialized})",
+      "${variables.serialized} != null ? ",
+      double,
+      ".tryParse(${variables.serialized}) : null",
     ]);
   }
 
@@ -102,6 +138,7 @@ class _DurationField extends _Field {
   const _DurationField({
     required super.builder,
     required super.declaration,
+    super.adapter,
   });
 
   @override
@@ -109,8 +146,9 @@ class _DurationField extends _Field {
     final int = await builder.resolveIdentifier(_dartCore, "int");
     return ExpressionCode.fromParts([
       "    final temp_${variables.serialized} = ",
+      "${variables.serialized} != null ? ",
       int,
-      ".tryParse(${variables.serialized});\n",
+      ".tryParse(${variables.serialized}) : null;\n",
     ]);
   }
 
@@ -139,6 +177,7 @@ class _EnumField extends _Field {
   const _EnumField({
     required super.builder,
     required super.declaration,
+    super.adapter,
   });
 
   Future<List<EnumValueDeclaration>> get _values async {

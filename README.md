@@ -11,19 +11,48 @@ and the Flutter guide for
 [developing packages and plugins](https://flutter.dev/to/develop-packages).
 -->
 
-TODO: Put a short description of the package here that helps potential users
-know whether this package might be useful for them.
+# Settings
+
+This package contains a [**macro**](https://dart.dev/language/macros) which simplifies the creation of a *"settings"* structure in your Flutter apps.
+
+It supports pre-configured and custom adapters for persisting data.
+- shared_preferences
+- flutter_secure_storage
 
 ## Features
 
-TODO: List what your package can do. Maybe include images, gifs, or videos.
+- Multiple adapters
+- Automatic support for [`ChangeNotifier`](https://api.flutter.dev/flutter/foundation/ChangeNotifier-class.html)
 
 ## Getting started
 
 TODO: List prerequisites and provide or point to information on how to
 start using the package.
 
+#### Without a version manager
+```sh
+flutter channel master
+```
+
+#### If using Puro
+```sh
+puro create main --channel=main # or: puro create master
+puro use main
+```
+
 ## Usage
+
+```dart
+// settings.dart
+import 'package:flutter/foundation.dart';
+
+import 'package:settings/macros.dart' as settings;
+
+@settings.Settings()
+class Settings with ChangeNotifier {
+
+}
+```
 
 TODO: Include short and useful examples for package users. Add longer examples
 to `/example` folder.
